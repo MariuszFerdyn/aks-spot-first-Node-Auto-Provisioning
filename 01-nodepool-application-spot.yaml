@@ -1,0 +1,47 @@
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: application
+spec:
+  weight: 99                       # higher weight => evaluated first (spot preferred)
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized   # remove empty AND repack underutilized
+    consolidateAfter: 1m           # collapse idle nodes quickly
+    budgets:
+      - nodes: "10%"
+  limits:
+    cpu: "100"
+    memory: 200Gi
+  template:
+    metadata:
+      labels:
+        kubernetes.azure.com/ebpf-dataplane: cilium
+    spec:
+      expireAfter: Never
+      nodeClassRef:
+        group: karpenter.azure.com
+        kind: AKSNodeClass
+        name: default
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        - key: karpenter.azure.com/sku-family
+          operator: In
+          values: ["E"]
+        - key: karpenter.azure.com/sku-name
+          operator: In
+          values:
+            - Standard_E2ds_v4
+            - Standard_E2ds_v5
+            - Standard_E2ds_v6
+      startupTaints:
+        - effect: NoExecute
+          key: node.cilium.io/agent-not-ready
+          value: "true"

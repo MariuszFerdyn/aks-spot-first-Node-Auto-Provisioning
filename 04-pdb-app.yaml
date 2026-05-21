@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-pdb
+spec:
+  # Keeps consolidation able to proceed. Never use 100% or a value == replicas.
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app: app
