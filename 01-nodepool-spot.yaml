@@ -1,12 +1,12 @@
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: application
+  name: spot
 spec:
-  weight: 99                       # higher weight => evaluated first (spot preferred)
+  weight: 99
   disruption:
-    consolidationPolicy: WhenEmptyOrUnderutilized   # remove empty AND repack underutilized
-    consolidateAfter: 1m           # collapse idle nodes quickly
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
     budgets:
       - nodes: "10%"
   limits:

@@ -14,7 +14,6 @@ spec:
       labels:
         app: app
     spec:
-      # REQUIRED: tolerate the spot taint AKS applies to spot nodes.
       tolerations:
         - key: "kubernetes.azure.com/scalesetpriority"
           operator: "Equal"
@@ -22,14 +21,12 @@ spec:
           effect: "NoSchedule"
       affinity:
         nodeAffinity:
-          # REQUIRED: only run on NAP/Karpenter nodes (excludes the fixed agentpool).
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
                   - key: karpenter.sh/capacity-type
                     operator: In
                     values: ["spot", "on-demand"]
-          # PREFERRED: among NAP nodes, prefer spot.
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
               preference:
@@ -37,11 +34,9 @@ spec:
                   - key: karpenter.sh/capacity-type
                     operator: In
                     values: ["spot"]
-      # No zone spread — lets Karpenter pack onto spot instead of forcing on-demand
-      # into zones that lack spot capacity.
       containers:
         - name: app
-          image: mafamafa/phpinfo-ubuntu:202401182132   # <-- your image:tag
+          image: mafamafa/phpinfo-ubuntu:202401182132
           resources:
             requests:
               cpu: "250m"

@@ -1,9 +1,9 @@
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
-  name: application2
+  name: ondemand
 spec:
-  weight: 10                       # lower weight => used only when spot can't provision
+  weight: 10
   disruption:
     consolidationPolicy: WhenEmptyOrUnderutilized
     consolidateAfter: 2m
