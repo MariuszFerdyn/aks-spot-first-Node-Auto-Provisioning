@@ -17,7 +17,7 @@ spec:
       labels:
         kubernetes.azure.com/ebpf-dataplane: cilium
     spec:
-      expireAfter: Never
+      expireAfter: 24h            # retire on-demand nodes daily => pods reschedule, spot-first
       nodeClassRef:
         group: karpenter.azure.com
         kind: AKSNodeClass
