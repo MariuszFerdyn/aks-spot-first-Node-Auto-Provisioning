@@ -14,8 +14,7 @@ arm/azuredeploy.json              (OPTIONAL) ARM template: new VNet + AKS with N
 arm/azuredeploy.parameters.json   (OPTIONAL) parameter values
 01-nodepool-spot.yaml             Karpenter NodePool 'spot'     (weight 99)
 02-nodepool-ondemand.yaml         Karpenter NodePool 'ondemand' (weight 10)
-03-deployment-app.yaml            Sample workload (spot toleration + required NAP affinity)
-04-pdb-app.yaml                   PodDisruptionBudget
+03-deployment-app.yaml            Sample workload + PodDisruptionBudget (one file, '---' separated)
 ```
 
 > The `spot`/`ondemand` NodePools are **Karpenter CRDs**, not ARM resources — applied with
@@ -85,8 +84,7 @@ kubectl get nodes        # the 2 system 'agentpool' nodes
 ```bash
 kubectl apply -f 01-nodepool-spot.yaml
 kubectl apply -f 02-nodepool-ondemand.yaml
-kubectl apply -f 03-deployment-app.yaml
-kubectl apply -f 04-pdb-app.yaml
+kubectl apply -f 03-deployment-app.yaml      # Deployment + PDB in one file
 # (NodePool/workload files only -- do NOT 'kubectl apply -f arm/')
 
 kubectl get nodepools -o custom-columns=NAME:.metadata.name,WEIGHT:.spec.weight
@@ -114,7 +112,7 @@ az vm list-usage -l "$REGION" -o table | grep -i -E "spot|low"
 
 ### 2b. Watch provisioning (spot first)
 ```bash
-kubectl get nodeclaims         # TYPE Standard_E2ds_*, CAPACITY spot expected first
+kubectl get nodeclaims -w      # TYPE Standard_E2ds_*, CAPACITY spot expected first
 kubectl get pods -l app=app -o wide
 kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool
 kubectl rollout status deploy/app
@@ -124,7 +122,7 @@ kubectl rollout status deploy/app
 ```bash
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"0"}}}'   # block spot
 kubectl scale deployment app --replicas=8
-kubectl get nodeclaims           # expect capacity-type=on-demand from 'ondemand'
+kubectl get nodeclaims -w        # expect capacity-type=on-demand from 'ondemand'
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"100"}}}' # revert
 kubectl scale deployment app --replicas=3
 ```
@@ -133,7 +131,7 @@ kubectl scale deployment app --replicas=3
 ```bash
 kubectl scale deployment app --replicas=8   # forces extra nodes
 kubectl scale deployment app --replicas=3   # frees them
-kubectl get nodes                            # idle nodes drain within consolidateAfter (1m/2m)
+kubectl get nodes -w                         # idle nodes drain within consolidateAfter (1m/2m)
 kubectl get events --field-selector reason=Unconsolidatable -A   # why a node lingers, if any
 ```
 
