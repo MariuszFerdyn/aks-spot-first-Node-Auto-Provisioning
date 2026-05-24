@@ -50,12 +50,24 @@
     "podCidr":           { "type": "string", "defaultValue": "10.244.0.0/16" },
     "serviceCidr":       { "type": "string", "defaultValue": "10.0.0.0/16" },
     "dnsServiceIP":      { "type": "string", "defaultValue": "10.0.0.10" },
-    "aadTenantId":       { "type": "string", "defaultValue": "[subscription().tenantId]" }
+    "aadTenantId":       { "type": "string", "defaultValue": "[subscription().tenantId]" },
+    "adminPrincipalId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": { "description": "Object (principal) ID of the user/group/SP to grant AKS RBAC Cluster Admin. Get yours: az ad signed-in-user show --query id -o tsv. Empty = no assignment created." }
+    },
+    "adminPrincipalType": {
+      "type": "string",
+      "defaultValue": "User",
+      "allowedValues": [ "User", "Group", "ServicePrincipal" ]
+    }
   },
   "variables": {
     "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnetName'), parameters('nodeSubnetName'))]",
     "networkContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
-    "roleAssignmentName": "[guid(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), parameters('identityName'), 'NetworkContributor')]"
+    "roleAssignmentName": "[guid(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), parameters('identityName'), 'NetworkContributor')]",
+    "aksRbacClusterAdminRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b1ff04bb-8a4e-4dc4-8eb5-8693973ce19b')]",
+    "aksAdminAssignmentName": "[guid(resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName')), parameters('adminPrincipalId'), 'AksRbacClusterAdmin')]"
   },
   "resources": [
     {
@@ -171,6 +183,19 @@
           "nodeOSUpgradeChannel": "NodeImage"
         },
         "bootstrapProfile": { "artifactSource": "Direct" }
+      }
+    },
+    {
+      "condition": "[not(empty(parameters('adminPrincipalId')))]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[variables('aksAdminAssignmentName')]",
+      "scope": "[format('Microsoft.ContainerService/managedClusters/{0}', parameters('clusterName'))]",
+      "dependsOn": [ "[resourceId('Microsoft.ContainerService/managedClusters', parameters('clusterName'))]" ],
+      "properties": {
+        "roleDefinitionId": "[variables('aksRbacClusterAdminRoleId')]",
+        "principalId": "[parameters('adminPrincipalId')]",
+        "principalType": "[parameters('adminPrincipalType')]"
       }
     },
     {
