@@ -127,7 +127,7 @@ sleep 35                         # Wait 35 seconds
 kubectl get nodeclaims           # expect capacity-type=on-demand from 'ondemand'
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"100"}}}' # revert
 kubectl scale deployment app --replicas=3
-sleep 235                        # Wait 135 seconds
+sleep 235                        # Wait 235 seconds
 kubectl get nodeclaims           # shoud return to previous state
 ```
 
