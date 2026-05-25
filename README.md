@@ -10,12 +10,13 @@ Instance types:
 - **On-demand pool** (`ondemand`, weight 10): `Standard_E2ds_v5`
 
 ```
-arm/azuredeploy.json              (OPTIONAL) ARM template: new VNet + AKS with NAP
-arm/azuredeploy.parameters.json   (OPTIONAL) parameter values
+azuredeploy.json                  (OPTIONAL) ARM template: new VNet + AKS with NAP
 01-nodepool-spot.yaml             Karpenter NodePool 'spot'     (weight 99)
 02-nodepool-ondemand.yaml         Karpenter NodePool 'ondemand' (weight 10)
 03-deployment-app.yaml            Sample workload + PodDisruptionBudget (one file, '---' separated)
 ```
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMariuszFerdyn%2Faks-spot-first-Node-Auto-Provisioning%2Fmain%2Fazuredeploy.json)
 
 > The `spot`/`ondemand` NodePools are **Karpenter CRDs**, not ARM resources — applied with
 > `kubectl` after the cluster exists.
@@ -55,12 +56,10 @@ combination that works in restricted / zone-limited regions.
 ```bash
 # validate first (creates nothing)
 az deployment group what-if -g "$RG" \
-  --template-file arm/azuredeploy.json \
-  --parameters @arm/azuredeploy.parameters.json
+  --template-file azuredeploy.json
 
 az deployment group create -g "$RG" \
-  --template-file arm/azuredeploy.json \
-  --parameters @arm/azuredeploy.parameters.json
+  --template-file azuredeploy.json
 ```
 
 ### 0d. Connect
@@ -85,7 +84,7 @@ kubectl get nodes        # the 2 system 'agentpool' nodes
 kubectl apply -f 01-nodepool-spot.yaml
 kubectl apply -f 02-nodepool-ondemand.yaml
 kubectl apply -f 03-deployment-app.yaml      # Deployment + PDB in one file
-# (NodePool/workload files only -- do NOT 'kubectl apply -f arm/')
+# (NodePool/workload files only -- do NOT 'kubectl apply -f azuredeploy.json')
 
 kubectl get nodepools -o custom-columns=NAME:.metadata.name,WEIGHT:.spec.weight
 # spot 99 / ondemand 10  (default & system-surge are the built-in NAP pools)
@@ -159,3 +158,18 @@ anti-affinity / topology spread. The `10%` budget rounds up, so it never freezes
   more -- quota and capacity are both per-region.
 - Interruption-sensitive/stateful workloads: separate Deployment with a `required` affinity on
   `karpenter.sh/capacity-type: on-demand` (don't run them on spot).
+
+---
+
+## Contribution rules
+- Keep this README updated whenever implementation changes are made.
+- Validate JSON and YAML files before committing.
+
+```bash
+# JSON
+python -m json.tool azuredeploy.json >/dev/null
+
+# YAML (syntax check)
+ruby -e 'require "psych"; ARGV.each { |f| Psych.parse_stream(File.read(f)) }' \
+  01-nodepool-spot.yaml 02-nodepool-ondemand.yaml 03-deployment-app.yaml
+```
