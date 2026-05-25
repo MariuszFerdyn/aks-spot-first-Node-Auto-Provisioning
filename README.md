@@ -112,27 +112,23 @@ az vm list-usage -l "$REGION" -o table | grep -i -E "spot|low"
 
 ### 2b. Watch provisioning (spot first)
 ```bash
-kubectl get nodeclaims -w      # TYPE Standard_E2ds_*, CAPACITY spot expected first
 kubectl get pods -l app=app -o wide
-kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool
+sleep 15                       # Wait 15 seconds
 kubectl rollout status deploy/app
+kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool
+kubectl get nodeclaims -w      # TYPE Standard_E2ds_*, CAPACITY spot expected first
 ```
 
 ### 2c. Test on-demand fallback (safe)
 ```bash
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"0"}}}'   # block spot
 kubectl scale deployment app --replicas=8
+sleep 35                         # Wait 35 seconds
 kubectl get nodeclaims -w        # expect capacity-type=on-demand from 'ondemand'
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"100"}}}' # revert
 kubectl scale deployment app --replicas=3
-```
-
-### 2d. Test scale-down (consolidation)
-```bash
-kubectl scale deployment app --replicas=8   # forces extra nodes
-kubectl scale deployment app --replicas=3   # frees them
-kubectl get nodes -w                         # idle nodes drain within consolidateAfter (1m/2m)
-kubectl get events --field-selector reason=Unconsolidatable -A   # why a node lingers, if any
+sleep 135                        # Wait 135 seconds
+kubectl get nodeclaims -w        # shoud return to previous state
 ```
 
 ---
