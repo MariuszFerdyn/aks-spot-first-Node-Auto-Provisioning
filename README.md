@@ -84,8 +84,9 @@ kubectl get nodes        # the 2 system 'agentpool' nodes
 kubectl apply -f 01-nodepool-spot.yaml
 kubectl apply -f 02-nodepool-ondemand.yaml
 kubectl apply -f 03-deployment-app.yaml      # Deployment + PDB in one file
-# (NodePool/workload files only -- do NOT 'kubectl apply -f azuredeploy.json')
-
+                                             # (NodePool/workload files only -- do NOT 'kubectl apply -f azuredeploy.json')
+sleep 45                                     # Wait 15 seconds
+kubectl get nodeclaims
 kubectl get nodepools -o custom-columns=NAME:.metadata.name,WEIGHT:.spec.weight
 # spot 99 / ondemand 10  (default & system-surge are the built-in NAP pools)
 ```
@@ -112,10 +113,10 @@ az vm list-usage -l "$REGION" -o table | grep -i -E "spot|low"
 ### 2b. Watch provisioning (spot first)
 ```bash
 kubectl get pods -l app=app -o wide
-sleep 15                       # Wait 15 seconds
+sleep 35                       # Wait 15 seconds
 kubectl rollout status deploy/app
 kubectl get nodes -L karpenter.sh/capacity-type,karpenter.sh/nodepool
-kubectl get nodeclaims -w      # TYPE Standard_E2ds_*, CAPACITY spot expected first
+kubectl get nodeclaims         # TYPE Standard_E2ds_*, CAPACITY spot expected first
 ```
 
 ### 2c. Test on-demand fallback (safe)
