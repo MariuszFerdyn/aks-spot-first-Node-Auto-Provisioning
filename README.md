@@ -164,7 +164,6 @@ anti-affinity / topology spread. The `10%` budget rounds up, so it never freezes
 ## Contribution rules
 - Keep this README updated whenever implementation changes are made.
 - Validate JSON and YAML files before committing.
-
 ```bash
 # JSON
 python -m json.tool azuredeploy.json >/dev/null

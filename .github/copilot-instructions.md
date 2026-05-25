@@ -2,6 +2,7 @@
 
 - After implementing any change, update README.md so documentation stays accurate.
 - Validate all YAML and JSON files before finalizing changes.
+- Do not propose or create any GitHub Actions workflows for this repository.
 - Use these commands for validation:
 
 ```bash
