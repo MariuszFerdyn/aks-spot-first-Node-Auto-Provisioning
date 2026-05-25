@@ -124,11 +124,11 @@ kubectl get nodeclaims         # TYPE Standard_E2ds_*, CAPACITY spot expected fi
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"0"}}}'   # block spot
 kubectl scale deployment app --replicas=8
 sleep 35                         # Wait 35 seconds
-kubectl get nodeclaims -w        # expect capacity-type=on-demand from 'ondemand'
+kubectl get nodeclaims           # expect capacity-type=on-demand from 'ondemand'
 kubectl patch nodepool spot --type merge -p '{"spec":{"limits":{"cpu":"100"}}}' # revert
 kubectl scale deployment app --replicas=3
 sleep 135                        # Wait 135 seconds
-kubectl get nodeclaims -w        # shoud return to previous state
+kubectl get nodeclaims           # shoud return to previous state
 ```
 
 ---
