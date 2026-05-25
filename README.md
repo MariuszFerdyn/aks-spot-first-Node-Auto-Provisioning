@@ -16,11 +16,6 @@ azuredeploy.json                  (OPTIONAL) ARM template: new VNet + AKS with N
 03-deployment-app.yaml            Sample workload + PodDisruptionBudget (one file, '---' separated)
 ```
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMariuszFerdyn%2Faks-spot-first-Node-Auto-Provisioning%2Fmain%2Fazuredeploy.json)
-
-> The `spot`/`ondemand` NodePools are **Karpenter CRDs**, not ARM resources — applied with
-> `kubectl` after the cluster exists.
-
 ---
 
 ## Part 0 — (OPTIONAL) Deploy a new AKS cluster with the ARM template
@@ -30,6 +25,11 @@ azuredeploy.json                  (OPTIONAL) ARM template: new VNet + AKS with N
 The template creates a **new VNet** + AKS cluster with **NAP enabled** (CNI Overlay + Cilium,
 AAD/Azure RBAC, workload identity, OIDC), plus a user-assigned identity granted **Network
 Contributor** on the VNet (required so the cluster can place nodes in a bring-your-own VNet).
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMariuszFerdyn%2Faks-spot-first-Node-Auto-Provisioning%2Fmain%2Fazuredeploy.json)
+
+> The `spot`/`ondemand` NodePools are **Karpenter CRDs**, not ARM resources — applied with
+> `kubectl` after the cluster exists.
 
 ### 0a. Resource group (the region is taken from the RG)
 ```bash
